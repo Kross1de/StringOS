@@ -12,4 +12,4 @@ StringOS - Operating system written in Zig for learn
     - [ ] Mouse
 - [ ] Virtual File System
 - [ ] Initial File System
-- [ ] Basic printing to the screen & printf implementation
+- [X] Basic printing to the screen & print implementation

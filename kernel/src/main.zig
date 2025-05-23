@@ -42,30 +42,10 @@ export fn _start() noreturn {
             .height = height,
         };
 
-        printer.print("Hello", .White);
-        printer.print("String Operating System IN ZIG!!", .White);
-        printer.print("Test: ><$%#@", .White);
-        printer.print("Test: 123456789", .White);
-        printer.print("NEW PRINT SYSTEM WORKING FINALLY ALRIGHT!!!!! =)", .White);
-        printer.print("Testing colors :::", .Black);
-        printer.print("Green", .Green);
-        printer.print("Red", .Red);
-        printer.print("Blue", .Blue);
-        printer.print("Yellow", .Yellow);
-        printer.print("Magenta", .Magenta);
-        printer.print("Cyan", .Cyan);
-        printer.print("Orange", .Orange);
-        printer.print("Purple", .Purple);
-        printer.print("Pink", .Pink);
-        printer.print("Brown", .Brown);
-        printer.print("LightBlue", .LightBlue);
-        printer.print("LightGreen", .LightGreen);
-        printer.print("LightGray", .LightGray);
-        printer.print("DarkGray", .DarkGray);
-        printer.print("DarkRed", .DarkRed);
-        printer.print("DarkGreen", .DarkGreen);
-        printer.print("DarkBlue", .DarkBlue);
+        printer.info("System initialization started");
+        printer.print("Hello from StringOS", .LightBlue);
     } else {
+        common.Serial.writeString("[ERROR] Framebuffer response not present\n");
         @panic("Framebuffer response not present");
     }
 

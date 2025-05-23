@@ -1,5 +1,54 @@
 const font = @import("font.zig");
 
+const COM1: u16 = 0x3F8;
+
+pub const Serial = struct {
+    pub fn init() void {
+        outb(COM1 + 1, 0x00);
+        outb(COM1 + 3, 0x80);
+        outb(COM1 + 0, 0x03);
+        outb(COM1 + 1, 0x00);
+        outb(COM1 + 3, 0x03);
+        outb(COM1 + 2, 0xC7);
+        outb(COM1 + 4, 0x0B);
+    }
+
+    fn isTransmitEmpty() bool {
+        return (inb(COM1 + 5) & 0x20) != 0;
+    }
+
+    pub fn writeByte(byte: u8) void {
+        while (!isTransmitEmpty()) {}
+        outb(COM1, byte);
+    }
+
+    pub fn writeString(str: []const u8) void {
+        for (str) |char| {
+            if (char == '\n') {
+                writeByte('\r');
+            }
+            writeByte(char);
+        }
+    }
+
+    fn outb(port: u16, value: u8) void {
+        asm volatile ("outb %[value], %[port]"
+            :
+            : [value] "{al}" (value),
+              [port] "{dx}" (port),
+            : "memory"
+        );
+    }
+
+    fn inb(port: u16) u8 {
+        return asm volatile ("inb %[port], %[result]"
+            : [result] "={al}" (-> u8),
+            : [port] "{dx}" (port),
+            : "memory"
+        );
+    }
+};
+
 pub const Color = enum {
     White,
     Green,
@@ -57,7 +106,7 @@ pub const TextPrinter = struct {
     width: u32,
     height: u32,
 
-    pub fn drawText(self: *TextPrinter, text: []const u8, color: Color) void {
+    pub fn printText(self: *TextPrinter, text: []const u8, color: Color) void {
         var x_offset: u32 = 0;
 
         for (text) |char| {
@@ -87,8 +136,34 @@ pub const TextPrinter = struct {
     }
 
     pub fn print(self: *TextPrinter, text: []const u8, color: Color) void {
-        self.drawText(text, color);
+        self.printText(text, color);
         self.y += font.Font.height * self.scale + self.scale * 2;
         self.x = 0;
+    }
+
+    pub fn debug(self: *TextPrinter, text: []const u8) void {
+        const debug_prefix = "[DEBUG] ";
+        self.printText(debug_prefix, .Green);
+        const prefix_width = @as(u32, @intCast(debug_prefix.len)) * font.Font.width * self.scale + self.scale;
+        self.x = prefix_width;
+        self.printText(text, .Green);
+        self.y += font.Font.height * self.scale + self.scale * 2;
+        self.x = 0;
+        Serial.writeString(debug_prefix);
+        Serial.writeString(text);
+        Serial.writeString("\n");
+    }
+
+    pub fn info(self: *TextPrinter, text: []const u8) void {
+        const info_prefix = "[INFO] ";
+        self.printText(info_prefix, .Blue);
+        const prefix_width = @as(u32, @intCast(info_prefix.len)) * font.Font.width * self.scale + self.scale;
+        self.x = prefix_width;
+        self.printText(text, .Blue);
+        self.y += font.Font.height * self.scale + self.scale * 2;
+        self.x = 0;
+        Serial.writeString(info_prefix);
+        Serial.writeString(text);
+        Serial.writeString("\n");
     }
 };

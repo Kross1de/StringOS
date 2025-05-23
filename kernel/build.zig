@@ -3,17 +3,11 @@ const std = @import("std");
 /// A list of architectures supported by the kernel.
 const Arch = enum {
     x86_64,
-    aarch64,
-    riscv64,
-    loongarch64,
 
     /// Convert the architecture to an std.Target.Cpu.Arch.
     fn toStd(self: @This()) std.Target.Cpu.Arch {
         return switch (self) {
             .x86_64 => .x86_64,
-            .aarch64 => .aarch64,
-            .riscv64 => .riscv64,
-            .loongarch64 => .loongarch64,
         };
     }
 };
@@ -35,19 +29,6 @@ fn targetQueryForArch(arch: Arch) std.Target.Query {
             query.cpu_features_add = Target.featureSet(&.{ .popcnt, .soft_float });
             query.cpu_features_sub = Target.featureSet(&.{ .avx, .avx2, .sse, .sse2, .mmx });
         },
-        .aarch64 => {
-            const Target = std.Target.aarch64;
-
-            query.cpu_features_add = Target.featureSet(&.{});
-            query.cpu_features_sub = Target.featureSet(&.{ .fp_armv8, .crypto, .neon });
-        },
-        .riscv64 => {
-            const Target = std.Target.riscv;
-
-            query.cpu_features_add = Target.featureSet(&.{});
-            query.cpu_features_sub = Target.featureSet(&.{.d});
-        },
-        .loongarch64 => {},
     }
 
     return query;
@@ -85,7 +66,6 @@ pub fn build(b: *std.Build) void {
             kernel_module.red_zone = false;
             kernel_module.code_model = .kernel;
         },
-        .aarch64, .riscv64, .loongarch64 => {},
     }
 
     // Add the limine module as an import to the kernel module.
