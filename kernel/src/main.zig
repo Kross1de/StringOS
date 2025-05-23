@@ -19,6 +19,45 @@ fn hcf() noreturn {
     }
 }
 
+const font = [_][7][5]u1{
+    [7][5]u1{
+        [5]u1{ 1, 0, 0, 0, 1 },
+        [5]u1{ 1, 0, 0, 0, 1 },
+        [5]u1{ 1, 0, 0, 0, 1 },
+        [5]u1{ 1, 1, 1, 1, 1 },
+        [5]u1{ 1, 0, 0, 0, 1 },
+        [5]u1{ 1, 0, 0, 0, 1 },
+        [5]u1{ 1, 0, 0, 0, 1 },
+    },
+    [7][5]u1{
+        [5]u1{ 1, 1, 1, 1, 1 },
+        [5]u1{ 1, 0, 0, 0, 0 },
+        [5]u1{ 1, 0, 0, 0, 0 },
+        [5]u1{ 1, 1, 1, 1, 0 },
+        [5]u1{ 1, 0, 0, 0, 0 },
+        [5]u1{ 1, 0, 0, 0, 0 },
+        [5]u1{ 1, 1, 1, 1, 1 },
+    },
+    [7][5]u1{
+        [5]u1{ 1, 0, 0, 0, 0 },
+        [5]u1{ 1, 0, 0, 0, 0 },
+        [5]u1{ 1, 0, 0, 0, 0 },
+        [5]u1{ 1, 0, 0, 0, 0 },
+        [5]u1{ 1, 0, 0, 0, 0 },
+        [5]u1{ 1, 0, 0, 0, 0 },
+        [5]u1{ 1, 1, 1, 1, 1 },
+    },
+    [7][5]u1{
+        [5]u1{ 0, 1, 1, 1, 0 },
+        [5]u1{ 1, 0, 0, 0, 1 },
+        [5]u1{ 1, 0, 0, 0, 1 },
+        [5]u1{ 1, 0, 0, 0, 1 },
+        [5]u1{ 1, 0, 0, 0, 1 },
+        [5]u1{ 1, 0, 0, 0, 1 },
+        [5]u1{ 0, 1, 1, 1, 0 },
+    },
+};
+
 export fn _start() noreturn {
     if (!base_revision.isSupported()) {
         @panic("Base revision not supported");
@@ -26,9 +65,30 @@ export fn _start() noreturn {
 
     if (framebuffer_request.response) |framebuffer_response| {
         const framebuffer = framebuffer_response.getFramebuffers()[0];
-        for (0..100) |i| {
-            const fb_ptr: [*]volatile u32 = @ptrCast(@alignCast(framebuffer.address));
-            fb_ptr[i * (framebuffer.pitch / 4) + i] = 0xffffff;
+        const fb_ptr: [*]volatile u32 = @ptrCast(@alignCast(framebuffer.address));
+        const pitch = framebuffer.pitch / 4;
+
+        const letters = [_]usize{ 0, 1, 2, 2, 3 };
+        const scale: u32 = 2;
+        const spacing: u32 = 6;
+
+        for (letters, 0..) |letter_idx, char_idx| {
+            const start_x = 50 + char_idx * (5 * scale + spacing);
+            const start_y = 50;
+
+            for (0..7) |y| {
+                for (0..5) |x| {
+                    if (font[letter_idx][y][x] == 1) {
+                        for (0..scale) |dy| {
+                            for (0..scale) |dx| {
+                                const pixel_x = start_x + x * scale + dx;
+                                const pixel_y = start_y + y * scale + dy;
+                                fb_ptr[pixel_y * pitch + pixel_x] = 0xffffff;
+                            }
+                        }
+                    }
+                }
+            }
         }
     } else {
         @panic("Framebuffer response not present");
