@@ -12,11 +12,6 @@ ARCH := x86_64
 # Install prefix; /usr/local is a good, standard default pick.
 PREFIX := /usr/local
 
-# Check if the architecture is supported.
-ifeq ($(filter $(ARCH),aarch64 loongarch64 riscv64 x86_64),)
-    $(error Architecture $(ARCH) not supported)
-endif
-
 # User controllable Zig compiler command.
 ZIG := zig
 

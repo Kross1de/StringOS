@@ -1,5 +1,6 @@
 const builtin = @import("builtin");
 const limine = @import("limine");
+const font = @import("font.zig");
 
 export var start_marker: limine.RequestsStartMarker linksection(".limine_requests_start") = .{};
 export var end_marker: limine.RequestsEndMarker linksection(".limine_requests_end") = .{};
@@ -19,44 +20,34 @@ fn hcf() noreturn {
     }
 }
 
-const font = [_][7][5]u1{
-    [7][5]u1{
-        [5]u1{ 1, 0, 0, 0, 1 },
-        [5]u1{ 1, 0, 0, 0, 1 },
-        [5]u1{ 1, 0, 0, 0, 1 },
-        [5]u1{ 1, 1, 1, 1, 1 },
-        [5]u1{ 1, 0, 0, 0, 1 },
-        [5]u1{ 1, 0, 0, 0, 1 },
-        [5]u1{ 1, 0, 0, 0, 1 },
-    },
-    [7][5]u1{
-        [5]u1{ 1, 1, 1, 1, 1 },
-        [5]u1{ 1, 0, 0, 0, 0 },
-        [5]u1{ 1, 0, 0, 0, 0 },
-        [5]u1{ 1, 1, 1, 1, 0 },
-        [5]u1{ 1, 0, 0, 0, 0 },
-        [5]u1{ 1, 0, 0, 0, 0 },
-        [5]u1{ 1, 1, 1, 1, 1 },
-    },
-    [7][5]u1{
-        [5]u1{ 1, 0, 0, 0, 0 },
-        [5]u1{ 1, 0, 0, 0, 0 },
-        [5]u1{ 1, 0, 0, 0, 0 },
-        [5]u1{ 1, 0, 0, 0, 0 },
-        [5]u1{ 1, 0, 0, 0, 0 },
-        [5]u1{ 1, 0, 0, 0, 0 },
-        [5]u1{ 1, 1, 1, 1, 1 },
-    },
-    [7][5]u1{
-        [5]u1{ 0, 1, 1, 1, 0 },
-        [5]u1{ 1, 0, 0, 0, 1 },
-        [5]u1{ 1, 0, 0, 0, 1 },
-        [5]u1{ 1, 0, 0, 0, 1 },
-        [5]u1{ 1, 0, 0, 0, 1 },
-        [5]u1{ 1, 0, 0, 0, 1 },
-        [5]u1{ 0, 1, 1, 1, 0 },
-    },
-};
+fn drawText(fb_ptr: [*]volatile u32, pitch: u64, text: []const u8, start_x: u32, start_y: u32, scale: u32, color: u32) void {
+    var x_offset: u32 = 0;
+
+    for (text) |char| {
+        if (char >= font.Font.first_char and char <= font.Font.last_char) {
+            const char_idx = char - font.Font.first_char;
+            const char_data = font.Font.data[char_idx];
+
+            for (0..font.Font.height) |y| {
+                const row = char_data[y];
+                for (0..font.Font.width) |x| {
+                    if ((row >> @intCast(7 - x)) & 1 == 1) {
+                        for (0..scale) |dy| {
+                            for (0..scale) |dx| {
+                                const pixel_x = start_x + x_offset + x * scale + dx;
+                                const pixel_y = start_y + y * scale + dy;
+                                if (pixel_x < @as(u32, @truncate(pitch / 4)) and pixel_y < 0xFFFFFFFF / @as(u32, @truncate(pitch / 4))) {
+                                    fb_ptr[pixel_y * @as(u32, @truncate(pitch / 4)) + pixel_x] = color;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        x_offset += font.Font.width * scale + scale;
+    }
+}
 
 export fn _start() noreturn {
     if (!base_revision.isSupported()) {
@@ -66,30 +57,18 @@ export fn _start() noreturn {
     if (framebuffer_request.response) |framebuffer_response| {
         const framebuffer = framebuffer_response.getFramebuffers()[0];
         const fb_ptr: [*]volatile u32 = @ptrCast(@alignCast(framebuffer.address));
-        const pitch = framebuffer.pitch / 4;
+        const pitch = framebuffer.pitch; // pitch is u64
 
-        const letters = [_]usize{ 0, 1, 2, 2, 3 };
-        const scale: u32 = 2;
-        const spacing: u32 = 6;
-
-        for (letters, 0..) |letter_idx, char_idx| {
-            const start_x = 50 + char_idx * (5 * scale + spacing);
-            const start_y = 50;
-
-            for (0..7) |y| {
-                for (0..5) |x| {
-                    if (font[letter_idx][y][x] == 1) {
-                        for (0..scale) |dy| {
-                            for (0..scale) |dx| {
-                                const pixel_x = start_x + x * scale + dx;
-                                const pixel_y = start_y + y * scale + dy;
-                                fb_ptr[pixel_y * pitch + pixel_x] = 0xffffff;
-                            }
-                        }
-                    }
-                }
+        for (0..framebuffer.height) |y| {
+            for (0..framebuffer.width) |x| {
+                fb_ptr[y * @as(u32, @truncate(pitch / 4)) + x] = 0x000000;
             }
         }
+
+        drawText(fb_ptr, pitch, "Hello", 50, 50, 1, 0xFFFFFF);
+        drawText(fb_ptr, pitch, "String Operating System IN ZIG!!", 50, 100, 1, 0x00FF00);
+        drawText(fb_ptr, pitch, "Test: ><$%#@", 50, 120, 1, 0x22FF00);
+        drawText(fb_ptr, pitch, "Test: 123456789", 50, 140, 1, 0x22FF00);
     } else {
         @panic("Framebuffer response not present");
     }
