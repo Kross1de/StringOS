@@ -1,3 +1,17 @@
+zig-cache/
+zig-out/
+.zig-cache/
+.zig-out/
+build/
+*.o
+*.obj
+*.bin
+*.iso
+*.log
+*.tmp
+.DS_Store
+*~
+.vscode/
 /limine
 /ovmf
 *.iso

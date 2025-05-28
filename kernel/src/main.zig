@@ -1,6 +1,7 @@
 const builtin = @import("builtin");
 const limine = @import("limine");
 const common = @import("common.zig");
+const gdt = @import("gdt.zig");
 
 export var start_marker: limine.RequestsStartMarker linksection(".limine_requests_start") = .{};
 export var end_marker: limine.RequestsEndMarker linksection(".limine_requests_end") = .{};
@@ -21,6 +22,8 @@ export fn _start() noreturn {
     if (!base_revision.isSupported()) {
         @panic("Base revision not supported");
     }
+
+    common.Serial.init();
 
     if (framebuffer_request.response) |framebuffer_response| {
         const framebuffer = framebuffer_response.getFramebuffers()[0];
@@ -43,7 +46,9 @@ export fn _start() noreturn {
         };
 
         printer.info("System initialization started");
-        printer.print("Hello from StringOS", .LightBlue);
+        gdt.loadGdt();
+        printer.info("GDT initialized");
+        printer.print("Hello from StringOS", .LightGreen);
     } else {
         common.Serial.writeString("[ERROR] Framebuffer response not present\n");
         @panic("Framebuffer response not present");
