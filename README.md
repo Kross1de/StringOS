@@ -3,7 +3,7 @@ StringOS - Operating system written in Zig for learn
 
 # Main goals
 - [ ] Basic tables
-    - [ ] GDT
+    - [X] GDT
     - [ ] IDT
     - [ ] IRQ
     - [ ] ISR
