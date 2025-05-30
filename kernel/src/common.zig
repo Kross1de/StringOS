@@ -1,53 +1,5 @@
 const font = @import("font.zig");
-
-const COM1: u16 = 0x3F8;
-
-pub const Serial = struct {
-    pub fn init() void {
-        outb(COM1 + 1, 0x00);
-        outb(COM1 + 3, 0x80);
-        outb(COM1 + 0, 0x03);
-        outb(COM1 + 1, 0x00);
-        outb(COM1 + 3, 0x03);
-        outb(COM1 + 2, 0xC7);
-        outb(COM1 + 4, 0x0B);
-    }
-
-    fn isTransmitEmpty() bool {
-        return (inb(COM1 + 5) & 0x20) != 0;
-    }
-
-    pub fn writeByte(byte: u8) void {
-        while (!isTransmitEmpty()) {}
-        outb(COM1, byte);
-    }
-
-    pub fn writeString(str: []const u8) void {
-        for (str) |char| {
-            if (char == '\n') {
-                writeByte('\r');
-            }
-            writeByte(char);
-        }
-    }
-
-    fn outb(port: u16, value: u8) void {
-        asm volatile ("outb %[value], %[port]"
-            :
-            : [value] "{al}" (value),
-              [port] "{dx}" (port),
-            : "memory"
-        );
-    }
-
-    fn inb(port: u16) u8 {
-        return asm volatile ("inb %[port], %[result]"
-            : [result] "={al}" (-> u8),
-            : [port] "{dx}" (port),
-            : "memory"
-        );
-    }
-};
+pub const Serial = @import("serial.zig").serial;
 
 pub const Color = enum {
     White,
