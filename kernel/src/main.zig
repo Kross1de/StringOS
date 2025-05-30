@@ -49,6 +49,7 @@ export fn _start() noreturn {
         gdt.loadGdt();
         printer.info("GDT initialized");
         printer.print("Hello from StringOS", .LightGreen);
+        printer.print("This is a my hobby OS in Zig!", .White);
     } else {
         common.Serial.writeString("[ERROR] Framebuffer response not present\n");
         @panic("Framebuffer response not present");

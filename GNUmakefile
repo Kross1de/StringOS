@@ -46,6 +46,18 @@ run-hdd-x86_64: ovmf/ovmf-code-$(ARCH).fd $(IMAGE_NAME).hdd
 		$(QEMUFLAGS)
 
 
+.PHONY: run-gdb
+run-gdb: run-gdb-$(ARCH)
+
+.PHONY: run-gdb-x86_64
+run-gdb-x86_64: ovmf/ovmf-code-$(ARCH).fd $(IMAGE_NAME).iso
+	qemu-system-$(ARCH) \
+		-M q35 \
+		-drive if=pflash,unit=0,format=raw,file=ovmf/ovmf-code-$(ARCH).fd,readonly=on \
+		-cdrom $(IMAGE_NAME).iso \
+		-s -S \
+		$(QEMUFLAGS)
+
 .PHONY: run-bios
 run-bios: $(IMAGE_NAME).iso
 	qemu-system-$(ARCH) \

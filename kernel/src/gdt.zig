@@ -15,10 +15,12 @@ const GdtPointer = packed struct {
 };
 
 pub fn loadGdt() void {
-    var gdt: [3]GdtEntry = undefined;
+    var gdt: [5]GdtEntry = undefined;
     gdt[0] = .{ .limit_low = 0, .base_low = 0, .base_middle = 0, .access = 0, .granularity = 0, .base_high = 0 };
     gdt[1] = .{ .limit_low = 0xFFFF, .base_low = 0, .base_middle = 0, .access = 0x9A, .granularity = 0xCF, .base_high = 0 };
     gdt[2] = .{ .limit_low = 0xFFFF, .base_low = 0, .base_middle = 0, .access = 0x92, .granularity = 0xCF, .base_high = 0 };
+    gdt[3] = .{ .limit_low = 0xFFFF, .base_low = 0, .base_middle = 0, .access = 0xFA, .granularity = 0xCF, .base_high = 0 };
+    gdt[4] = .{ .limit_low = 0xFFFF, .base_low = 0, .base_middle = 0, .access = 0xF2, .granularity = 0xCF, .base_high = 0 };
 
     var gp: GdtPointer = undefined;
     gp.limit = (@sizeOf(@TypeOf(gdt)) - 1) & 0xFFFF;
